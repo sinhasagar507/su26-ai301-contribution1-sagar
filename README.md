@@ -1,23 +1,23 @@
-# Contribution 1: Fix inconsistent URL encoding in @medusajs/file-s3
+# Contribution 1: Fix numpy>=2.3 type-check failures in tqec
 
 **Contribution Number:** 1
 **Student:** Sagar Sinha
-**Issue:** [medusajs/medusa #14957 — "[Bug]: Inconsistent URL encoding in @medusajs/file-s3"](https://github.com/medusajs/medusa/issues/14957)
-**Status:** Phase II — Complete
+**Issue:** [tqec/tqec #613 — "Fix mypy failures for numpy>=2.3"](https://github.com/tqec/tqec/issues/613)
+**Status:** Phase I — Complete
 
 ---
 
 ## Why I Chose This Issue
 
-I chose [medusajs/medusa #14957](https://github.com/medusajs/medusa/issues/14957) in [medusajs/medusa](https://github.com/medusajs/medusa), a widely-used open-source commerce platform. The issue is a well-scoped bug in the S3 file provider (`@medusajs/file-s3`): public file URLs are built inconsistently across upload methods, which can produce broken links to product images and uploaded assets.
+I chose [tqec/tqec #613](https://github.com/tqec/tqec/issues/613) in [tqec/tqec](https://github.com/tqec/tqec), a design-automation library for representing, constructing, and compiling large-scale fault-tolerant quantum computations (Topological Quantum Error Correction, based on the surface code and lattice surgery). The issue asks to fix static type-checking failures that appear when `numpy>=2.3` is installed: numpy 2.3 tightened the type stubs for its scalar types (`signedinteger`, `floating`), and the type checker now flags places in `tqec` that iterate over, index with, or pass those scalars where the new stubs no longer allow it.
 
 I chose it for three reasons:
 
-1. **Tightly scoped.** The bug lives in a single small TypeScript file and is about correct URL string handling — easy to understand and reason about without learning the whole platform.
-2. **Clear definition of done.** The issue states the expected vs. actual behavior precisely, so I have an unambiguous target.
-3. **Labeled and claimable.** It is open, unassigned, and labeled `help-wanted` / `type: bug` / `version: 2.0`.
+1. **Tightly scoped and well-specified.** The issue lists the exact files and line numbers where the errors occur (`subtemplates.py`, `display.py`, `_testing.py`, `template.py`, `generation.py`, `database.py`, `rotations.py`), so the surface area is small and unambiguous.
+2. **Non-quantum.** It is labeled `non-quantum` and `good first issue` — it is about Python typing, not surface-code physics, so I can contribute correctly without deep QEC domain expertise.
+3. **Clear definition of done.** The fix is complete when the project's type checker passes against `numpy>=2.3`.
 
-**Issue status note (important and verified):** While reproducing, I confirmed that the underlying bug has **already been fixed upstream** on the `develop` branch by [PR #15109](https://github.com/medusajs/medusa/pull/15109) ("fix(file-s3): encode URL path segments individually to preserve prefix slashes"), merged 2026-05-03. The issue is still shown as "open" only because that PR did not use GitHub's `Fixes #14957` auto-close keyword. I reproduced the bug against the affected v2.5.1 behavior and commented on the issue noting it appears resolved on `develop`. Per the Phase II guidance for an already-fixed issue, this write-up documents a faithful reproduction and a solution plan rather than a new pull request.
+**Issue status note (important and verified):** The issue title says "mypy," but the project currently type-checks with **`ty`** (Astral's type checker) via `uv run ty check` in CI — there is no `mypy` configured anywhere in the repo. `numpy` is also currently capped at `<2.3` in [`pyproject.toml`](https://github.com/tqec/tqec/blob/main/pyproject.toml) (upper bound added in PR #659), so the failing version is not installed by default; reproducing the errors requires lifting that cap. The reporter (`purva-thakre`) further notes the errors "may fix themselves once a stable numpy 2.3 is released," and there is live upstream work in PR #659. I am officially assigned to the issue (`sinhasagar507`). I will verify the exact current state — which errors still reproduce under `numpy>=2.3`, and against `ty` vs. `mypy` — in Phase II before writing the fix.
 
 ---
 
