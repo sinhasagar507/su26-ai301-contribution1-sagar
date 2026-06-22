@@ -25,32 +25,27 @@ I chose it for three reasons:
 
 ### Problem Description
 
-The S3 file provider (`@medusajs/file-s3`, v2.5.1) builds the public file URL as `${fileUrl}/${key}`, but the two upload paths encode the key inconsistently, so the resulting URLs are malformed in different ways.
+numpy 2.3 tightened the type stubs for its scalar types (e.g. `np.signedinteger`, `np.floating`). Code in tqec that iterates over, indexes into, or passes those scalars in ways the new stubs no longer permit fails the static type checker. The issue asks to fix all such failures so `uv run ty check` passes cleanly when numpy>=2.3 is installed.
 
 ### Expected Behavior
 
-The file key should be encoded **per path segment** — each segment URL-encoded, with the `/` separators preserved — so a key like `uploads/products/my product-01JRXYZ.jpg` yields:
+`uv run ty check` exits 0 with numpy>=2.3 installed, and all existing tests still pass.
 
-```
-https://cdn.example.com/uploads/products/my%20product-01JRXYZ.jpg
-```
+### Current Behavior
 
-### Current Behavior (v2.5.1)
-
-- **`upload()`** runs `encodeURIComponent()` on the **entire** key, so the `/` separators become `%2F` and the path structure breaks:
-  ```
-  https://cdn.example.com/uploads%2Fproducts%2Fmy%20product-01JRXYZ.jpg
-  ```
-- **`getUploadStream()`** applies **no** encoding, so spaces and special characters are left raw, producing an invalid URL:
-  ```
-  https://cdn.example.com/uploads/products/my product-01JRXYZ.jpg
-  ```
-
-Malformed URLs stored as the canonical file URL cause 404s or CDN resolution failures.
+`pyproject.toml` caps numpy at `<2.3` (`"numpy>=1.22,<2.3"`, line 44) specifically to avoid these type failures. The cap was added conservatively in PR #659 — the type errors themselves were never fixed.
 
 ### Affected Components
 
-- `packages/modules/providers/file-s3/src/services/s3-file.ts` — the `upload()` and `getUploadStream()` methods (and the shared URL-building logic).
+The issue originally listed these files as containing numpy scalar type errors:
+
+- `src/tqec/templates/subtemplates.py`
+- `src/tqec/display.py`
+- `src/tqec/_testing.py`
+- `src/tqec/templates/template.py`
+- `src/tqec/compile/generation.py`
+- `src/tqec/compile/database.py`
+- `src/tqec/templates/rotations.py`
 
 ---
 
@@ -58,38 +53,38 @@ Malformed URLs stored as the canonical file URL cause 404s or CDN resolution fai
 
 ### Environment Setup
 
-The bug is pure URL-string logic, so a full Medusa monorepo build is not required to reproduce it.
+- Python 3.13, `uv` (installed to `~/.local/bin`)
+- Cloned `tqec/tqec` into `/Applications/saggydev/projects_learning/tqec`
+- Created working branch `fix/613-numpy-2.3-type-errors`
+- Lifted the `numpy<2.3` cap in `pyproject.toml` to install numpy 2.4.6 (latest available)
 
-- `gh` CLI was not installed locally, so the fork was created via the GitHub website.
-- Cloned the fork as a subfolder and worked from a feature branch.
-- Reproduction needs only Node.js (verified with `node v22.22.0`) — no S3 credentials, no `yarn build`.
-
-Working branch: `https://github.com/sinhasagar507/medusa/tree/fix-issue-14957`
+```bash
+git clone https://github.com/tqec/tqec.git
+cd tqec
+git checkout -b fix/613-numpy-2.3-type-errors
+# edit pyproject.toml: remove "<2.3" from the numpy constraint
+uv sync
+uv run ty check
+uv run pytest --tb=short -q
+```
 
 ### Steps to Reproduce
 
-1. Clone Medusa and check out the affected version's behavior (v2.5.1). The relevant file is `packages/modules/providers/file-s3/src/services/s3-file.ts`.
-2. Observe that in v2.5.1 `upload()` builds the URL with `encodeURIComponent(fileKey)` applied to the whole key, while `getUploadStream()` applies no encoding.
-3. Run the self-contained reproduction script that mirrors that exact logic:
-   ```
-   node repro-issue-14957.js
-   ```
-4. **Expected:** all upload paths produce `.../uploads/products/my%20product-...jpg` (slashes preserved, space encoded).
-5. **Actual (v2.5.1):**
-   ```
-   key              : uploads/products/my product-01JRXYZ.jpg
-   upload()         : https://cdn.example.com/uploads%2Fproducts%2Fmy%20product-01JRXYZ.jpg   <-- separators broken (%2F)
-   getUploadStream(): https://cdn.example.com/uploads/products/my product-01JRXYZ.jpg   <-- raw space, invalid URL
-   expected (fixed) : https://cdn.example.com/uploads/products/my%20product-01JRXYZ.jpg   <-- correct
-   ```
-
-Running the script twice produces identical output, confirming the behavior is deterministic.
+1. Lift the `numpy<2.3` cap in `pyproject.toml` and run `uv sync` — this installs numpy 2.4.6.
+2. Run `uv run ty check` to observe type-checker output.
+3. Run `uv run pytest --tb=short -q` to verify the test suite.
 
 ### Reproduction Evidence
 
-- **Branch:** `https://github.com/sinhasagar507/medusa/tree/fix-issue-14957`
-- **Commit showing reproduction:** the `repro-issue-14957.js` commit on that branch (`Reproduce issue #14957: inconsistent URL encoding in @medusajs/file-s3`).
-- **My findings:** The bug reproduces exactly as described on the v2.5.1 logic. On the current `develop` branch, both methods already encode per segment — `fileKey.split("/").map(encodeURIComponent).join("/")` (see `s3-file.ts` around lines 164–171 and 208–215) — and a dedicated test `s3-file-url-encoding.spec.ts` already exists. The fix landed in PR #15109. I commented on the issue reporting it appears resolved on `develop`.
+**`ty check` result (numpy 2.4.6, Python 3.13):** exit 0 — only 3 pre-existing `redundant-cast` warnings unrelated to the issue. No numpy scalar type errors.
+
+**Test suite result:** 788 passed, 0 failed.
+
+**Key finding — the true blocker:** The type errors from the original issue report are essentially gone under `ty` (the repo migrated from mypy to Astral's `ty` checker; the issue title still says "mypy" but there is no mypy config in the repo). The real blocker is a cross-repo dependency cap: `tqecd==0.2.0` (tqec's sibling decoder package) pins `numpy>=1.22,<2.3`, and it is the latest published release. tqec mirrors this cap at `pyproject.toml:44`. The cap cannot be lifted in tqec until `tqecd` ships a new release without the `<2.3` upper bound.
+
+**Runtime note:** tqecd runs fine with numpy 2.4.6 at runtime — the cap is conservative metadata, not a real incompatibility.
+
+**Maintainer contact (2026-06-20):** A maintainer replied on the issue inviting a fresh PR coupling the numpy version bump with any remaining type fixes, superseding the stale PR #659.
 
 ---
 
@@ -97,48 +92,49 @@ Running the script twice produces identical output, confirming the behavior is d
 
 ### Analysis
 
-Root cause: `encodeURIComponent()` is the wrong granularity for an entire path. It percent-encodes `/`, which is correct for a single segment but destroys path structure when applied to the whole key. `getUploadStream()` had the opposite problem — no encoding at all. The two paths should share one correct encoding strategy.
+There are two parts to the fix:
+
+1. **tqecd (upstream blocker):** `tqecd` must release a version that drops the `numpy<2.3` upper bound. Without this, `uv sync` in tqec cannot resolve numpy>=2.3 regardless of what tqec's own `pyproject.toml` says.
+2. **tqec (the actual PR):** Once tqecd publishes an uncapped release, the tqec PR lifts the matching cap and relocks so CI exercises numpy 2.3+.
 
 ### Proposed Solution
 
-Encode each path segment individually and rejoin with `/`, used by every method that builds the public URL — so `/` separators are preserved while segment contents (spaces, `&`, etc.) are encoded.
+Lift the numpy version cap as a dependency metadata change — no source file rewrites needed, since `ty check` is already clean.
 
 ### Implementation Plan
 
 Using the UMPIRE framework (adapted):
 
-**Understand:** URLs are malformed because `upload()` over-encodes (whole key, `/` → `%2F`) and `getUploadStream()` under-encodes (no encoding). Both should produce per-segment-encoded URLs.
+**Understand:** The `numpy<2.3` cap in tqec exists solely because tqecd has not published an uncapped release. The type-checker errors that motivated the cap are no longer present under `ty` with numpy 2.4.6.
 
-**Match:** The correct pattern is `key.split("/").map(encodeURIComponent).join("/")` — exactly what upstream PR #15109 adopted and what the reproduction script confirms produces the expected URL.
+**Match:** The fix is a `pyproject.toml` + `uv.lock` change. Pattern: lift the cap, relock, confirm CI passes.
 
 **Plan:**
-1. Add a private helper on the service (e.g. `encodeKey(key: string)`) that returns `key.split("/").map(encodeURIComponent).join("/")`.
-2. Use the helper in both `upload()` and `getUploadStream()` when constructing `${this.config_.fileUrl}/${encodedKey}`, removing the inconsistent inline encoding.
-3. Add unit tests under `src/services/__tests__/` asserting that the resulting URL keeps `/` separators (no `%2F`) and encodes special characters (spaces, `&`) within a segment, for both methods.
 
-**Implement:** Branch `https://github.com/sinhasagar507/medusa/tree/fix-issue-14957` (reproduction committed; the fix itself is already present upstream in PR #15109, so this is documented rather than re-submitted).
+1. Raise the tqecd blocker with the maintainer — ask whether tqecd 0.2.1 (uncapped) is planned, or whether tqec should override the cap temporarily.
+2. Once tqecd is released: edit `pyproject.toml` — change `"tqecd>=0.2.0"` to `"tqecd>=0.2.1"` and remove the `<2.3` upper bound from the numpy constraint.
+3. Run `uv lock` to relock; run `uv run ty check` and `uv run pytest` to confirm clean.
+4. Open a PR against `main` on branch `fix/613-numpy-2.3-type-errors`.
 
-**Review:** Follow Medusa's contribution conventions — branch prefix `fix/`, base branch `develop`, PR description structured as What / Why / How / Testing, small isolated commits, squash-merge. Tests live alongside the service in `__tests__/`.
+**Review:** tqec uses `uv` + `ty` + `ruff`; follow `CONTRIBUTING.md`. Only `pyproject.toml` and `uv.lock` change.
 
-**Evaluate:** The reproduction script prints the correct per-segment-encoded URL after the fix; unit tests modeled on the upstream `s3-file-url-encoding.spec.ts` pass.
+**Evaluate:** `uv run ty check` exits 0, `uv run pytest` passes 788+ tests, CI exercises numpy 2.3+.
 
 ---
 
 ## Testing Strategy
 
-### Unit Tests
+### Static Type Check
 
-- [ ] `upload()` with a prefix containing `/` keeps the separators (no `%2F`) and encodes the filename's spaces.
-- [ ] `getUploadStream()` with the same input produces the same correctly-encoded URL.
-- [ ] A segment containing special characters (e.g. `&`) is encoded within the segment while `/` separators are preserved.
+- [x] `uv run ty check` exits 0 with numpy 2.4.6 installed (confirmed locally)
 
-### Integration Tests
+### Unit / Integration Tests
 
-- [ ] Not required for this fix — the behavior is deterministic string logic covered by unit tests.
+- [x] Full test suite (`uv run pytest`) passes — 788 tests with numpy 2.4.6
 
 ### Manual Testing
 
-Ran `node repro-issue-14957.js` (twice) to confirm the v2.5.1 malformed outputs and the corrected output; results captured under Steps to Reproduce.
+Ran `uv run ty check` and `uv run pytest --tb=short -q` after lifting the numpy cap locally — both pass. Results captured under Reproduction Evidence above.
 
 ---
 
@@ -146,21 +142,22 @@ Ran `node repro-issue-14957.js` (twice) to confirm the v2.5.1 malformed outputs 
 
 ### Code Changes
 
-- **Files involved:** `packages/modules/providers/file-s3/src/services/s3-file.ts` (and a test under `src/services/__tests__/`).
-- **Reproduction artifact:** `repro-issue-14957.js` on branch `fix-issue-14957`.
-- **Upstream resolution:** PR #15109 (merged 2026-05-03).
+- **Files to modify:** `pyproject.toml` (lift numpy cap, bump tqecd lower bound), `uv.lock` (relock)
+- **Working branch:** `fix/613-numpy-2.3-type-errors` in the tqec clone at `/Applications/saggydev/projects_learning/tqec`
+- **Blocker:** Waiting on `tqecd` to publish a release without the `numpy<2.3` cap. Raised with the maintainer.
 
 ---
 
 ## Pull Request
 
-No pull request: the underlying fix is already merged upstream (PR #15109). I commented on the issue to report it appears resolved on `develop`.
+Not yet opened — blocked on `tqecd` publishing an uncapped release. The PR will be opened on branch `fix/613-numpy-2.3-type-errors` once the blocker is resolved.
 
 ---
 
 ## Resources Used
 
-- Issue: https://github.com/medusajs/medusa/issues/14957
-- Upstream fix: https://github.com/medusajs/medusa/pull/15109
-- Affected source: `packages/modules/providers/file-s3/src/services/s3-file.ts`
-- Medusa contribution guide (CONTRIBUTING.md)
+- Issue: [tqec/tqec #613](https://github.com/tqec/tqec/issues/613)
+- Stale upstream PR (reference only): [tqec/tqec #659](https://github.com/tqec/tqec/pull/659)
+- tqecd package: [tqec/tqecd](https://github.com/tqec/tqecd)
+- tqec `pyproject.toml`: line 44 (numpy cap), line 59 (tqecd dep)
+- tqec contribution guide: `CONTRIBUTING.md`
