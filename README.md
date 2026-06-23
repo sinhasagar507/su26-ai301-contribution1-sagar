@@ -3,7 +3,7 @@
 **Contribution Number:** 1
 **Student:** Sagar Sinha
 **Issue:** [tqec/tqec #613 — "Fix mypy failures for numpy>=2.3"](https://github.com/tqec/tqec/issues/613)
-**Status:** Phase II — Complete · Phase III — In Progress (Build)
+**Status:** Phase III — Complete
 
 ---
 
@@ -161,33 +161,58 @@ Using the UMPIRE framework (adapted):
 
 ## Testing Strategy
 
+All gates are the project's real CI commands (`uv run ty check`, `uv run ruff check`, `uv run pytest`). numpy ≥ 2.3 was forced locally via a temporary, uncommitted `uv` override (see [Refined Reproduction](#phase-iii--refined-reproduction-build-2026-06-22)).
+
 ### Static Type Check
 
-- [x] `uv run ty check` exits 0 with numpy 2.4.6 installed (confirmed locally)
+- [x] `uv run ty check` — **clean at numpy 2.3.5, 2.4.6, and 2.5.0** (2.5.0 was the only failing version; clean after the `merge.py` fix), and in the committed state (numpy 2.2.6).
 
 ### Unit / Integration Tests
 
-- [x] Full test suite (`uv run pytest`) passes — 788 tests with numpy 2.4.6
+- [x] `uv run pytest $(git ls-files '*_test.py')` — **788 passed** at numpy 2.5.0 (`merge_test.py`: 13 passed). No runtime behavior change.
+- [x] **Line coverage 92%** overall (`merge.py` 93%; the changed line is exercised) — above the project's 80% bar.
 
-### Manual Testing
+### Code Health
 
-Ran `uv run ty check` and `uv run pytest --tb=short -q` after lifting the numpy cap locally — both pass. Results captured under Reproduction Evidence above.
+- [x] `uv run ruff check` — clean (import swap is tidy, no unused import left behind).
+
+### Regression Guard
+
+The CI `ty check` job is the guard: once `tqecd` lifts its `numpy<2.3` cap and the lockfile resolves numpy ≥ 2.3, the existing matrix job exercises this automatically. No CI change was added — to keep the PR minimal and avoid committing a uv-only override into CI (discussed in the PR).
 
 ---
 
 ## Implementation Notes
 
+### Implementation Progress
+
+Phase III is **complete** on the tqec side — two small, independent commits on branch `fix/613-numpy-2.3-type-check`:
+
+1. **Type fix** (`compile/blocks/layers/merge.py`): `numpy.lcm.reduce(considered_timesteps)` → `math.lcm(*considered_timesteps)`. numpy 2.5 tightened the `ufunc.reduce` stubs, making the old call fail `ty`; the input is a non-empty `list[int]`, so `math.lcm` is equivalent, returns a plain `int`, and removes the file's only numpy import.
+2. **Dependency cap-lift** (`pyproject.toml` + `uv.lock`): removed the `numpy<2.3` upper bound (added in #659) and relocked.
+
+The original `signedinteger` errors from #613 are already gone under `ty` (clean at numpy 2.3.5/2.4.6); the only remaining numpy ≥ 2.3 error was the numpy-2.5 `lcm.reduce` one fixed above.
+
 ### Code Changes
 
-- **Files to modify:** `pyproject.toml` (lift numpy cap, bump tqecd lower bound), `uv.lock` (relock)
-- **Working branch:** `fix/613-numpy-2.3-type-check` in the tqec clone at `/Applications/saggydev/projects_learning/su26-ai301-contribution1-sagar/tqec`
-- **Blocker:** Waiting on `tqecd` to publish a release without the `numpy<2.3` cap. Raised with the maintainer.
+- **Branch:** [`fix/613-numpy-2.3-type-check`](https://github.com/sinhasagar507/tqec/tree/fix/613-numpy-2.3-type-check) (fork `sinhasagar507/tqec`)
+- **Commits:**
+  - [`2b026fb8` — Replace numpy.lcm.reduce with math.lcm](https://github.com/sinhasagar507/tqec/commit/2b026fb88)
+  - [`663d03b8` — Lift the numpy<2.3 upper bound](https://github.com/sinhasagar507/tqec/commit/663d03b80)
+- **Draft PR:** [tqec/tqec#977](https://github.com/tqec/tqec/pull/977)
+
+### Challenges Faced
+
+- **The literal task had shifted.** The issue says "mypy," but the repo type-checks with `ty`, and the originally-listed `signedinteger` errors had already resolved once numpy 2.3 stabilized. Confirming this required forcing numpy ≥ 2.3 deterministically (a `uv` override scoped to Python ≥ 3.11, since numpy ≥ 2.3 dropped 3.10) and testing each minor version — which surfaced the real, current error (numpy 2.5 / `merge.py`) the issue never listed.
+- **The real blocker is cross-repo.** Lifting tqec's own cap doesn't resolve numpy ≥ 2.3 because `tqecd 0.2.0` transitively pins `numpy<2.3`. That makes the PR a draft pending a tqecd release (or a temporary `uv` override) — raised with the maintainer on #613.
 
 ---
 
 ## Pull Request
 
-Not yet opened — blocked on `tqecd` publishing an uncapped release. The PR will be opened on branch `fix/613-numpy-2.3-type-check` once the blocker is resolved.
+**Draft PR:** [tqec/tqec#977 — Lift numpy<2.3 cap and fix numpy 2.5 ty error](https://github.com/tqec/tqec/pull/977) (supersedes the stale #659).
+
+Opened as a **draft**: the tqec-side change is complete and green, but full numpy ≥ 2.3 resolution is blocked on `tqecd` dropping its transitive `numpy<2.3` cap (`tqecd 0.2.0` is the latest release). The tqecd handling — a tqecd release vs. a temporary `uv` override in tqec — is under discussion with the maintainer on #613. Iterating with the maintainer continues in Phase IV.
 
 ---
 
