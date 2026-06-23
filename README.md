@@ -3,7 +3,7 @@
 **Contribution Number:** 1
 **Student:** Sagar Sinha
 **Issue:** [tqec/tqec #613 — "Fix mypy failures for numpy>=2.3"](https://github.com/tqec/tqec/issues/613)
-**Status:** Phase I — Complete
+**Status:** Phase II — Complete · Phase III — In Progress (Build)
 
 ---
 
@@ -86,6 +86,43 @@ uv run pytest --tb=short -q
 
 **Maintainer contact (2026-06-20):** A maintainer replied on the issue inviting a fresh PR coupling the numpy version bump with any remaining type fixes, superseding the stale PR #659.
 
+### Phase III — Refined Reproduction (Build, 2026-06-22)
+
+The Phase II evidence above was correct as far as it went, but Phase III tightened it by forcing numpy ≥ 2.3 deterministically and testing each minor version. Two things changed the picture.
+
+**Method.** With the `<2.3` cap still present, `uv` resolves numpy to **2.2.6** (not 2.4.6) — the `tqecd 0.2.0` transitive `numpy<2.3` cap drags it below 2.3. To exercise the real numpy ≥ 2.3 scenario I added a temporary, repro-only override (removed before any commit) that beats *both* caps:
+
+```toml
+# pyproject.toml — TEMPORARY, reproduction only
+[tool.uv]
+override-dependencies = ["numpy>=2.3; python_version >= '3.11'"]
+```
+
+The `python_version >= '3.11'` marker is required: **numpy ≥ 2.3 dropped Python 3.10 support**, and tqec still targets 3.10 (`requires-python = ">=3.10,<3.14"`). A bare `numpy>=2.3` override is *unsatisfiable* on the 3.10 leg, so the real fix must lift the cap without forcing 2.3 onto 3.10.
+
+**`ty check` per numpy version (Python 3.13):**
+
+| numpy | `ty check` | Notes |
+| --- | --- | --- |
+| 2.2.6 (capped default) | ✅ clean | what the `<2.3` cap actually installs today |
+| 2.3.5 | ✅ `All checks passed!` | all 7 issue-listed files clean |
+| 2.4.6 | ✅ `All checks passed!` | all 7 issue-listed files clean |
+| 2.5.0 | ❌ **1 error** | new overload error, see below |
+
+**The one real error (numpy 2.5.0 only):** numpy 2.5.0 tightened the `ufunc.reduce` type stubs, surfacing a single failure in a file the issue never listed:
+
+```text
+error[no-matching-overload]: No overload of bound method `_UFunc_Nin2_Nout1.reduce` matches arguments
+  --> src/tqec/compile/blocks/layers/merge.py:177
+  num_internal_layers = numpy.lcm.reduce(considered_timesteps)
+```
+
+`considered_timesteps` is a `list[int]`, so the minimal, idiomatic fix is `math.lcm(*considered_timesteps)` — a pure-`int` result, no numpy scalar, available on Python ≥ 3.9 (tqec targets ≥ 3.10).
+
+**Test suite at numpy 2.5.0:** **788 passed**, 257 slow-deselected — i.e. this is *purely* a static-typing issue; runtime is correct. (The run emits numpy-2.5 deprecation warnings, but only from the third-party `pycollada` dependency, not from tqec.)
+
+**Refined conclusion.** Supporting numpy ≥ 2.3 is *two* coupled changes, not one: (a) lift tqec's `<2.3` cap — clean through numpy 2.4 with **zero** source edits; (b) one-line `merge.py` type fix to also stay clean on numpy 2.5. The *resolution* blocker is unchanged: `tqecd 0.2.0`'s transitive `numpy<2.3` cap still has to be lifted (tqecd release) or overridden in tqec for CI to actually install numpy ≥ 2.3.
+
 ---
 
 ## Solution Approach
@@ -99,7 +136,7 @@ There are two parts to the fix:
 
 ### Proposed Solution
 
-Lift the numpy version cap as a dependency metadata change — no source file rewrites needed, since `ty check` is already clean.
+Lift the numpy version cap (a dependency-metadata change) **and** apply one small source fix. *Updated by Phase III ([Refined Reproduction](#phase-iii--refined-reproduction-build-2026-06-22)):* the original "no source rewrites needed" assumption holds through numpy 2.4, but numpy 2.5.0 surfaces one real `ty` error in `compile/blocks/layers/merge.py` (`numpy.lcm.reduce` → `math.lcm`). The PR therefore couples the cap-lift with that one-line fix, exactly the bump-plus-type-fix the maintainer requested.
 
 ### Implementation Plan
 
