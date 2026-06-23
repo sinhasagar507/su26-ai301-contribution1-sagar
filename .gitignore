@@ -1,5 +1,18 @@
 # Nested Medusa clone used for Phase II reproduction (not part of this repo)
 /medusa/
 
+# Nested tqec clone for issue #613 contribution — work is committed to a fork, not here
+/tqec/
+
+# Redundant duplicate tqec clone, pending manual deletion — never commit it
+/tqec_old/
+
+# CodePath lecture materials — kept local, not part of the submitted deliverable
+/lecture-materials/
+
 # Local working notes — not part of the submitted deliverable
 /PHASE2_PLAN.md
+/PHASE3_PLAN.md
+
+# Local Claude Code harness dir (settings, memory) — not part of the deliverable
+/.claude/

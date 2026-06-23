@@ -54,14 +54,14 @@ The issue originally listed these files as containing numpy scalar type errors:
 ### Environment Setup
 
 - Python 3.13, `uv` (installed to `~/.local/bin`)
-- Cloned `tqec/tqec` into `/Applications/saggydev/projects_learning/tqec`
-- Created working branch `fix/613-numpy-2.3-type-errors`
+- Cloned `tqec/tqec` into `/Applications/saggydev/projects_learning/su26-ai301-contribution1-sagar/tqec`
+- Created working branch `fix/613-numpy-2.3-type-check`
 - Lifted the `numpy<2.3` cap in `pyproject.toml` to install numpy 2.4.6 (latest available)
 
 ```bash
 git clone https://github.com/tqec/tqec.git
 cd tqec
-git checkout -b fix/613-numpy-2.3-type-errors
+git checkout -b fix/613-numpy-2.3-type-check
 # edit pyproject.toml: remove "<2.3" from the numpy constraint
 uv sync
 uv run ty check
@@ -114,7 +114,7 @@ Using the UMPIRE framework (adapted):
 1. Raise the tqecd blocker with the maintainer — ask whether tqecd 0.2.1 (uncapped) is planned, or whether tqec should override the cap temporarily.
 2. Once tqecd is released: edit `pyproject.toml` — change `"tqecd>=0.2.0"` to `"tqecd>=0.2.1"` and remove the `<2.3` upper bound from the numpy constraint.
 3. Run `uv lock` to relock; run `uv run ty check` and `uv run pytest` to confirm clean.
-4. Open a PR against `main` on branch `fix/613-numpy-2.3-type-errors`.
+4. Open a PR against `main` on branch `fix/613-numpy-2.3-type-check`.
 
 **Review:** tqec uses `uv` + `ty` + `ruff`; follow `CONTRIBUTING.md`. Only `pyproject.toml` and `uv.lock` change.
 
@@ -143,14 +143,14 @@ Ran `uv run ty check` and `uv run pytest --tb=short -q` after lifting the numpy 
 ### Code Changes
 
 - **Files to modify:** `pyproject.toml` (lift numpy cap, bump tqecd lower bound), `uv.lock` (relock)
-- **Working branch:** `fix/613-numpy-2.3-type-errors` in the tqec clone at `/Applications/saggydev/projects_learning/tqec`
+- **Working branch:** `fix/613-numpy-2.3-type-check` in the tqec clone at `/Applications/saggydev/projects_learning/su26-ai301-contribution1-sagar/tqec`
 - **Blocker:** Waiting on `tqecd` to publish a release without the `numpy<2.3` cap. Raised with the maintainer.
 
 ---
 
 ## Pull Request
 
-Not yet opened — blocked on `tqecd` publishing an uncapped release. The PR will be opened on branch `fix/613-numpy-2.3-type-errors` once the blocker is resolved.
+Not yet opened — blocked on `tqecd` publishing an uncapped release. The PR will be opened on branch `fix/613-numpy-2.3-type-check` once the blocker is resolved.
 
 ---
 
