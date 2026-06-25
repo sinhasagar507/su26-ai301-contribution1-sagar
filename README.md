@@ -3,7 +3,7 @@
 **Contribution Number:** 1
 **Student:** Sagar Sinha
 **Issue:** [tqec/tqec #613 — "Fix mypy failures for numpy>=2.3"](https://github.com/tqec/tqec/issues/613)
-**Status:** Phase III — Complete
+**Status:** Phase IV — Complete (PR submitted & under maintainer review)
 
 ---
 
@@ -210,9 +210,30 @@ The original `signedinteger` errors from #613 are already gone under `ty` (clean
 
 ## Pull Request
 
-**Draft PR:** [tqec/tqec#977 — Lift numpy<2.3 cap and fix numpy 2.5 ty error](https://github.com/tqec/tqec/pull/977) (supersedes the stale #659).
+**PR Link:** [tqec/tqec#977 — Lift numpy<2.3 cap and fix numpy 2.5 ty error](https://github.com/tqec/tqec/pull/977) (supersedes the stale #659).
 
-Opened as a **draft**: the tqec-side change is complete and green, but full numpy ≥ 2.3 resolution is blocked on `tqecd` dropping its transitive `numpy<2.3` cap (`tqecd 0.2.0` is the latest release). The tqecd handling — a tqecd release vs. a temporary `uv` override in tqec — is under discussion with the maintainer on #613. Iterating with the maintainer continues in Phase IV.
+**PR Description (summary):** Couples two changes to support `numpy>=2.3`: (a) a one-line type fix in `compile/blocks/layers/merge.py` (`numpy.lcm.reduce(...)` → `math.lcm(*...)`, the only `ty` error surfaced by numpy 2.5), and (b) lifting tqec's `numpy<2.3` upper bound in `pyproject.toml` + relocking. `ty` clean at numpy 2.3.5 / 2.4.6 / 2.5.0; 788 tests pass; 92% coverage. Closes #613.
+
+**Status:** **Phase IV Complete — PR submitted; iterating with maintainer.** Open as an honest **draft** pending one external, maintainer-owned step (see below). Per the program, a review-ready submitted PR is the Phase IV milestone; the work is complete and green on the tqec side, with the remaining blocker outside this repo.
+
+### Maintainer Feedback
+
+The feedback loop on [issue #613](https://github.com/tqec/tqec/issues/613) (maintainer **@nelimee**, cc **@purva-thakre**):
+
+- **Jun 19** — @nelimee confirmed PR #659 was stalled (waiting on a `stim` release that has since shipped) and invited a fresh PR; I was assigned to the issue.
+- **Jun 23** — I posted the full investigation: the original `signedinteger` errors are gone under `ty` (clean at numpy 2.3.5 / 2.4.6), numpy 2.5 surfaces exactly one new error in `merge.py` (fixed), and the real blocker is cross-repo — `tqecd 0.2.0` transitively pins `numpy<2.3`, so lifting tqec's own cap alone still resolves numpy to 2.2.x.
+- **Jun 23** — @nelimee replied: *"I'll try to bump `tqecd`, good catch. Keeping you updated."* (path A — an uncapped `tqecd` release).
+- **Jun 23** — I confirmed the plan: once the new `tqecd` is on PyPI I'll bump `tqecd>=0.2.x`, relock, and flip #977 to ready-for-review.
+
+**Next step (maintainer-owned, external):** waiting on @nelimee to publish an uncapped `tqecd` release. As of this writing `tqecd` is still 0.2.0 on PyPI with the `numpy<2.3` cap. When it lands I'll bump the dependency, relock so numpy ≥ 2.3 actually resolves, re-run `ty`/tests, and un-draft. No follow-up ping is due yet — @nelimee replied on Jun 23 and said they'd keep me posted (LT4 etiquette: wait ~5–7 business days before nudging).
+
+---
+
+## Learnings & Reflections
+
+- **Verify the task before fixing it.** The issue said "mypy" and listed seven files; the repo had since migrated to Astral's `ty`, and those errors had already resolved once numpy 2.3 stabilized. Reproducing deterministically (a `uv` override scoped to Python ≥ 3.11, because numpy ≥ 2.3 dropped 3.10) surfaced the *actual* current error — numpy 2.5 / `merge.py` — that the issue never listed. The hardest part was distinguishing "already fixed" from "not yet reproduced."
+- **Some blockers aren't in the repo you're editing.** The cleanest local fix still couldn't fully land because a *sibling* package (`tqecd`) transitively capped numpy. Recognizing this early and raising it with the maintainer — rather than forcing a fragile uv-only override into CI — kept the PR honest and got the maintainer to own the dependency bump.
+- **Communicating the blocker clearly was as valuable as the code.** A concise, evidence-backed comment on #613 turned a stuck PR into an active collaboration: the maintainer agreed to bump `tqecd` within hours.
 
 ---
 
