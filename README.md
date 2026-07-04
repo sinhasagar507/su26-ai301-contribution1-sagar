@@ -224,8 +224,20 @@ The feedback loop on [issue #613](https://github.com/tqec/tqec/issues/613) (main
 - **Jun 23** — I posted the full investigation: the original `signedinteger` errors are gone under `ty` (clean at numpy 2.3.5 / 2.4.6), numpy 2.5 surfaces exactly one new error in `merge.py` (fixed), and the real blocker is cross-repo — `tqecd 0.2.0` transitively pins `numpy<2.3`, so lifting tqec's own cap alone still resolves numpy to 2.2.x.
 - **Jun 23** — @nelimee replied: *"I'll try to bump `tqecd`, good catch. Keeping you updated."* (path A — an uncapped `tqecd` release).
 - **Jun 23** — I confirmed the plan: once the new `tqecd` is on PyPI I'll bump `tqecd>=0.2.x`, relock, and flip #977 to ready-for-review.
+- **Jul 1** — polite follow-up (LT4 etiquette, ~1 week after his last reply) confirming the `tqecd` bump was still on his radar.
+- **Jul 3** — @nelimee replied: *"It is, but I won't have the time to do it in the next few days. Seems like that could be a good first contribution to `tqecd` from you too :) Sorry for flagging that as 'I'll do it' and blocking you."* — **the path flipped from A to B: the maintainer invited me to open the `tqecd` cap-lift myself.**
+- **Jul 4** — acknowledged on #613, then opened the parallel `tqecd` contribution (see below).
 
-**Next step (maintainer-owned, external):** waiting on @nelimee to publish an uncapped `tqecd` release. As of this writing `tqecd` is still 0.2.0 on PyPI with the `numpy<2.3` cap. When it lands I'll bump the dependency, relock so numpy ≥ 2.3 actually resolves, re-run `ty`/tests, and un-draft. No follow-up ping is due yet — @nelimee replied on Jun 23 and said they'd keep me posted (LT4 etiquette: wait ~5–7 business days before nudging).
+### Parallel Contribution — `tqecd` cap-lift (the actual unblocker)
+
+The cross-repo blocker is fixed where it actually lives — in `tqecd`, at @nelimee's invitation:
+
+- **Issue:** [tqec/tqecd#70 — Lift the numpy<2.3 upper bound](https://github.com/tqec/tqecd/issues/70) (`enhancement`; follows tqecd's issue-first contributor guide).
+- **PR:** [tqec/tqecd#71 — Lift the numpy<2.3 upper bound](https://github.com/tqec/tqecd/pull/71) (`Closes #70`). One-line metadata change: `numpy>=1.22,<2.3` → `numpy>=1.22`.
+- **Verified:** unlike the tqec side, `tqecd` needed **zero source edits** — `mypy src/tqecd` is clean and all **123 tests** pass at numpy 2.3.5 / 2.4.6 / 2.5.1 (Python ≥ 3.11; Python 3.10 keeps numpy 2.2.x automatically). `pre-commit run --all-files` green.
+- **Scope note:** this is a *second, maintainer-invited* contribution in a different repo. #613's Phase IV milestone was already met independently; the `tqecd` PR is what will finally let numpy ≥ 2.3 resolve end-to-end.
+
+**Next step:** once tqecd#71 merges **and** @nelimee cuts a `tqecd` release (tag-gated PyPI publish — a maintainer-owned step; merging alone doesn't publish), I'll bump `tqecd>=<new>` in tqec's `pyproject.toml`, relock so numpy ≥ 2.3 actually resolves, re-run `ty`/tests, and un-draft #977.
 
 ---
 
@@ -234,6 +246,8 @@ The feedback loop on [issue #613](https://github.com/tqec/tqec/issues/613) (main
 - **Verify the task before fixing it.** The issue said "mypy" and listed seven files; the repo had since migrated to Astral's `ty`, and those errors had already resolved once numpy 2.3 stabilized. Reproducing deterministically (a `uv` override scoped to Python ≥ 3.11, because numpy ≥ 2.3 dropped 3.10) surfaced the *actual* current error — numpy 2.5 / `merge.py` — that the issue never listed. The hardest part was distinguishing "already fixed" from "not yet reproduced."
 - **Some blockers aren't in the repo you're editing.** The cleanest local fix still couldn't fully land because a *sibling* package (`tqecd`) transitively capped numpy. Recognizing this early and raising it with the maintainer — rather than forcing a fragile uv-only override into CI — kept the PR honest and got the maintainer to own the dependency bump.
 - **Communicating the blocker clearly was as valuable as the code.** A concise, evidence-backed comment on #613 turned a stuck PR into an active collaboration: the maintainer agreed to bump `tqecd` within hours.
+- **A polite follow-up can hand you the next contribution.** A one-week nudge on #613 turned the maintainer's "I'll do it" into "this could be a good first contribution to `tqecd` from you too" — a second, invited PR in a sibling repo. Respecting the target repo's *own* rules mattered: `tqecd` has a separate issue-first contributor guide and uses `mypy` (not `ty`) with `pre-commit` hooks, none of which could be assumed from the `tqec` clone.
+- **Merging isn't shipping.** `tqecd`'s PyPI publish is tag-gated, so even a merged cap-lift doesn't unblock downstream until the maintainer cuts a release — a step outside my control, documented honestly in the PR rather than glossed over.
 
 ---
 

@@ -7,6 +7,9 @@
 # Redundant duplicate tqec clone, pending manual deletion — never commit it
 /tqec_old/
 
+# Nested tqecd clone for the numpy<2.3 cap-lift PR (tqec #613 follow-up) — work goes to the fork, not here
+/tqecd/
+
 # CodePath lecture materials — kept local, not part of the submitted deliverable
 /lecture-materials/
 
