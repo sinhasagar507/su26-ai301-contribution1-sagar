@@ -260,5 +260,5 @@ The cross-repo blocker is fixed where it actually lives — in `tqecd`, at @neli
 - tqecd cap-lift issue: [tqec/tqecd #70](https://github.com/tqec/tqecd/issues/70)
 - tqecd cap-lift PR: [tqec/tqecd #71](https://github.com/tqec/tqecd/pull/71)
 - tqec `pyproject.toml`: line 44 (numpy cap), line 59 (tqecd dep)
-- tqec contribution guide: `CONTRIBUTING.md`
+- tqec contribution guide: [`CONTRIBUTING.md`](https://github.com/tqec/tqec/blob/main/CONTRIBUTING.md)
 - tqecd contributor guide (issue-first; `mypy` + `pre-commit`): [contributor_guide](https://tqec.github.io/tqecd/contributor_guide.html)
