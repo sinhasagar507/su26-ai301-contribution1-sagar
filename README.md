@@ -3,7 +3,7 @@
 **Contribution Number:** 1
 **Student:** Sagar Sinha
 **Issue:** [tqec/tqec #613 — "Fix mypy failures for numpy>=2.3"](https://github.com/tqec/tqec/issues/613)
-**Status:** Phase IV — Complete (PR submitted & under maintainer review)
+**Status:** Phase IV Complete — tqec PR [#977](https://github.com/tqec/tqec/pull/977) submitted (draft, pending tqecd release); parallel unblocker [tqecd#71](https://github.com/tqec/tqecd/pull/71) open & under review
 
 ---
 
@@ -255,6 +255,10 @@ The cross-repo blocker is fixed where it actually lives — in `tqecd`, at @neli
 
 - Issue: [tqec/tqec #613](https://github.com/tqec/tqec/issues/613)
 - Stale upstream PR (reference only): [tqec/tqec #659](https://github.com/tqec/tqec/pull/659)
+- tqec PR (draft): [tqec/tqec #977](https://github.com/tqec/tqec/pull/977)
 - tqecd package: [tqec/tqecd](https://github.com/tqec/tqecd)
+- tqecd cap-lift issue: [tqec/tqecd #70](https://github.com/tqec/tqecd/issues/70)
+- tqecd cap-lift PR: [tqec/tqecd #71](https://github.com/tqec/tqecd/pull/71)
 - tqec `pyproject.toml`: line 44 (numpy cap), line 59 (tqecd dep)
 - tqec contribution guide: `CONTRIBUTING.md`
+- tqecd contributor guide (issue-first; `mypy` + `pre-commit`): [contributor_guide](https://tqec.github.io/tqecd/contributor_guide.html)
