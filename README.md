@@ -3,7 +3,7 @@
 **Contribution Number:** 1
 **Student:** Sagar Sinha
 **Issue:** [tqec/tqec #613 — "Fix mypy failures for numpy>=2.3"](https://github.com/tqec/tqec/issues/613)
-**Status:** Blocker cleared (2026-07-05) — parallel unblocker [tqecd#71](https://github.com/tqec/tqecd/pull/71) **merged** and **tqecd 0.2.1 released** on PyPI; tqec PR [#977](https://github.com/tqec/tqec/pull/977) bumped to `tqecd>=0.2.1`, **un-drafted and ready for review** (awaiting maintainer CI approval + merge)
+**Status:** ✅ **COMPLETE (2026-07-06)** — tqec PR [#977](https://github.com/tqec/tqec/pull/977) **merged by @nelimee** (all 11 checks green), closing [#613](https://github.com/tqec/tqec/issues/613) end-to-end. The cross-repo unblocker [tqecd#71](https://github.com/tqec/tqecd/pull/71) was also **merged** and **tqecd 0.2.1 released** on PyPI — two merged contributions across two repos.
 
 ---
 
@@ -200,7 +200,8 @@ The original `signedinteger` errors from #613 are already gone under `ty` (clean
   - [`2b026fb8` — Replace numpy.lcm.reduce with math.lcm](https://github.com/sinhasagar507/tqec/commit/2b026fb88)
   - [`663d03b8` — Lift the numpy<2.3 upper bound](https://github.com/sinhasagar507/tqec/commit/663d03b80)
   - [`2b82c11b5` — Require tqecd>=0.2.1 to allow numpy>=2.3](https://github.com/sinhasagar507/tqec/commit/2b82c11b5) (2026-07-05, on top of the maintainer's `main` merge)
-- **PR:** [tqec/tqec#977](https://github.com/tqec/tqec/pull/977) (un-drafted / ready for review)
+  - `Update pyproject.toml` — applied @nelimee's review suggestion, 2026-07-06
+- **PR:** [tqec/tqec#977](https://github.com/tqec/tqec/pull/977) — **merged 2026-07-06**
 
 ### Challenges Faced
 
@@ -212,11 +213,11 @@ The original `signedinteger` errors from #613 are already gone under `ty` (clean
 
 ## Pull Request
 
-**PR Link:** [tqec/tqec#977 — Lift numpy<2.3 cap and fix numpy 2.5 ty error](https://github.com/tqec/tqec/pull/977) (supersedes the stale #659).
+**PR Link:** [tqec/tqec#977 — Lift numpy<2.3 cap and fix numpy 2.5 ty error](https://github.com/tqec/tqec/pull/977) — **merged 2026-07-06** (supersedes the stale #659).
 
 **PR Description (summary):** Three changes to support `numpy>=2.3`: (a) a one-line type fix in `compile/blocks/layers/merge.py` (`numpy.lcm.reduce(...)` → `math.lcm(*...)`, the only `ty` error surfaced by numpy 2.5), (b) lifting tqec's `numpy<2.3` upper bound in `pyproject.toml` + relocking, and (c) bumping `tqecd>=0.2.1` (first tqecd release without its own `numpy<2.3` cap). `ty` clean at numpy 2.3.5 / 2.4.6 / 2.5.1; 788 tests pass; 92% coverage. Closes #613.
 
-**Status:** **Un-drafted and ready for review (2026-07-05).** The blocker is resolved end-to-end (tqecd#71 merged + 0.2.1 released + floor bumped), so the PR was flipped from draft to ready-for-review. Remaining steps are maintainer-owned: approving the gated fork-PR workflows (CI, Test Minimum Versions, GitHub Pages currently sit at `action_required`), then review + merge.
+**Status:** ✅ **Merged 2026-07-06** by @nelimee, closing #613 — see [Merged](#merged-2026-07-06) for the approve → suggestion → merge sequence.
 
 ### Maintainer Feedback
 
@@ -229,16 +230,16 @@ The feedback loop on [issue #613](https://github.com/tqec/tqec/issues/613) (main
 - **Jul 1** — polite follow-up (LT4 etiquette, ~1 week after his last reply) confirming the `tqecd` bump was still on his radar.
 - **Jul 3** — @nelimee replied: *"It is, but I won't have the time to do it in the next few days. Seems like that could be a good first contribution to `tqecd` from you too :) Sorry for flagging that as 'I'll do it' and blocking you."* — **the path flipped from A to B: the maintainer invited me to open the `tqecd` cap-lift myself.**
 - **Jul 4** — acknowledged on #613, then opened the parallel `tqecd` contribution (see below).
+- **Jul 6** — @nelimee **approved** #977 and offered to carry it the rest of the way himself: *"You have nothing more to do, I'll click on merge as soon as CI passes."* (mechanics in [Merged](#merged-2026-07-06) below).
 
 ### Parallel Contribution — `tqecd` cap-lift (the actual unblocker)
 
-The cross-repo blocker is fixed where it actually lives — in `tqecd`, at @nelimee's invitation:
+The cross-repo blocker is fixed where it actually lives — in `tqecd`:
 
 - **Issue:** [tqec/tqecd#70 — Lift the numpy<2.3 upper bound](https://github.com/tqec/tqecd/issues/70) (`enhancement`; follows tqecd's issue-first contributor guide).
-- **PR:** [tqec/tqecd#71 — Lift the numpy<2.3 upper bound](https://github.com/tqec/tqecd/pull/71) (`Closes #70`) — **merged by @nelimee on 2026-07-05**. One-line metadata change: `numpy>=1.22,<2.3` → `numpy>=1.22`.
+- **PR:** [tqec/tqecd#71 — Lift the numpy<2.3 upper bound](https://github.com/tqec/tqecd/pull/71) (`Closes #70`) — one-line metadata change: `numpy>=1.22,<2.3` → `numpy>=1.22`.
 - **Verified:** unlike the tqec side, `tqecd` needed **zero source edits** — `mypy src/tqecd` is clean and all **123 tests** pass at numpy 2.3.5 / 2.4.6 / 2.5.1 (Python ≥ 3.11; Python 3.10 keeps numpy 2.2.x automatically). `pre-commit run --all-files` green.
-- **Released:** **tqecd 0.2.1** published to PyPI on 2026-07-05 (`numpy>=1.22`, no upper bound) — the tag-gated release that actually unblocks downstream.
-- **Scope note:** this is a *second, maintainer-invited* contribution in a different repo. #613's Phase IV milestone was already met independently; the `tqecd` PR is what finally lets numpy ≥ 2.3 resolve end-to-end.
+- **Scope note:** this is a *second* contribution in a different repo. #613's Phase IV milestone was already met independently; the `tqecd` PR is what finally lets numpy ≥ 2.3 resolve end-to-end (merge + release dates in [Blocker Cleared](#blocker-cleared--un-block-2026-07-05) below).
 
 ### Blocker Cleared — Un-block (2026-07-05)
 
@@ -247,8 +248,14 @@ The cross-repo blocker closed out in a single day, all on the maintainer's side,
 - **12:42 UTC** — @nelimee merged [tqecd#71](https://github.com/tqec/tqecd/pull/71) and closed [tqecd#70](https://github.com/tqec/tqecd/issues/70).
 - **12:59 UTC** — @nelimee released **tqecd 0.2.1** to PyPI (drops the `numpy<2.3` cap).
 - **~14:02 UTC** — @nelimee merged `main` *into* the PR branch (via "Allow edits from maintainers"), bringing #977 up to date — commits preserved, not rebased.
-- **Un-block commit** — on top of that merge, [`2b82c11b5`](https://github.com/sinhasagar507/tqec/commit/2b82c11b5) bumps `tqecd>=0.2.1` and relocks. Re-verified on the merged base: `ty` clean and **788 pass** at both the default lock (numpy 2.2.6) and forced numpy 2.5.1; 92% coverage. Proved the fix directly — `tqecd==0.2.0` makes `numpy>=2.3` unsatisfiable, `tqecd>=0.2.1` resolves it.
-- **#977 un-drafted** and a ready-for-review note posted to @nelimee. Remaining: maintainer approves the gated workflows, then review + merge.
+- **Un-block commit** — on top of that merge, [`2b82c11b5`](https://github.com/sinhasagar507/tqec/commit/2b82c11b5) bumps `tqecd>=0.2.1` and relocks, re-verified green on the merged base (see [Testing Strategy](#testing-strategy)). Proved the fix directly — `tqecd==0.2.0` makes `numpy>=2.3` unsatisfiable, `tqecd>=0.2.1` resolves it.
+- **#977 un-drafted** and a ready-for-review note posted to @nelimee.
+
+### Merged (2026-07-06)
+
+- @nelimee's one review suggestion — remove the now-redundant inline comment on the numpy constraint — was applied via GitHub's "Commit suggestion" (commit `Update pyproject.toml`), which auto-dismissed his approval (branch protection dismisses stale approvals on a new push).
+- The lone failing check was **"Check for broken links"** (`make linkcheck` in `docs/`, a flaky external-URL validator), **unrelated** to the pyproject/`merge.py` diff. @nelimee fixed it himself in [#998](https://github.com/tqec/tqec/pull/998) (`fix: ignore stargazer list`) and merged #977 once CI passed.
+- **#977 squash-merged to `main` as [`4aed39c99`](https://github.com/tqec/tqec/commit/4aed39c99)**, all 11 checks green. Local + fork clones resynced to merged `main`; the merged feature branches were deleted on both `tqec` and `tqecd`.
 
 ---
 
@@ -260,6 +267,7 @@ The cross-repo blocker closed out in a single day, all on the maintainer's side,
 - **A polite follow-up can hand you the next contribution.** A one-week nudge on #613 turned the maintainer's "I'll do it" into "this could be a good first contribution to `tqecd` from you too" — a second, invited PR in a sibling repo. Respecting the target repo's *own* rules mattered: `tqecd` has a separate issue-first contributor guide and uses `mypy` (not `ty`) with `pre-commit` hooks, none of which could be assumed from the `tqec` clone.
 - **Merging isn't shipping.** `tqecd`'s PyPI publish is tag-gated, so even a merged cap-lift doesn't unblock downstream until the maintainer cuts a release — a step outside my control, documented honestly in the PR rather than glossed over. In this case the wait was short: the maintainer merged, released 0.2.1, and synced `main` into my PR branch all within ~90 minutes.
 - **Reconcile, don't force-push.** When I went to push the un-block commit, the maintainer had already pushed a `main`-merge to my fork branch (via "Allow edits from maintainers"), so my push was correctly rejected as non-fast-forward. The right move was to fetch, reset onto his merge, re-apply the one-line bump, regenerate the lock, and re-verify on the merged base — never `--force`. A large-looking `uv.lock` diff turned out to be a genuine, `uv lock --locked`-clean consequence of the dependency change, not noise to hand-trim away.
+- **A red check isn't always your bug — read *which* check.** Applying the maintainer's review suggestion auto-dismissed his approval (branch protection dismisses stale approvals on any push — expected, not a mistake), and the re-run then showed one red check. Reading it carefully mattered: it was the docs `linkcheck` job (`make linkcheck`, which hits live external URLs and is inherently flaky), not any test or type-check touched by the diff. Rather than "fixing" something I didn't break, I flagged it as unrelated — and the maintainer confirmed, patched it himself in #998, and merged. Distinguishing a CI red herring from a real regression saved a pointless scramble.
 
 ---
 
@@ -267,7 +275,7 @@ The cross-repo blocker closed out in a single day, all on the maintainer's side,
 
 - Issue: [tqec/tqec #613](https://github.com/tqec/tqec/issues/613)
 - Stale upstream PR (reference only): [tqec/tqec #659](https://github.com/tqec/tqec/pull/659)
-- tqec PR (ready for review): [tqec/tqec #977](https://github.com/tqec/tqec/pull/977)
+- tqec PR (merged): [tqec/tqec #977](https://github.com/tqec/tqec/pull/977)
 - tqecd package: [tqec/tqecd](https://github.com/tqec/tqecd)
 - tqecd cap-lift issue: [tqec/tqecd #70](https://github.com/tqec/tqecd/issues/70)
 - tqecd cap-lift PR: [tqec/tqecd #71](https://github.com/tqec/tqecd/pull/71)
