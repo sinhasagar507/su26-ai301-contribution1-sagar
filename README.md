@@ -282,3 +282,87 @@ The cross-repo blocker closed out in a single day, all on the maintainer's side,
 - tqec `pyproject.toml`: line 44 (numpy cap), line 59 (tqecd dep)
 - tqec contribution guide: [`CONTRIBUTING.md`](https://github.com/tqec/tqec/blob/main/CONTRIBUTING.md)
 - tqecd contributor guide (issue-first; `mypy` + `pre-commit`): [contributor_guide](https://tqec.github.io/tqecd/contributor_guide.html)
+
+---
+---
+
+# Contribution 2: Surface non-convergence in `SVC` with `max_iter=-1` (scikit-learn)
+
+**Contribution Number:** 2
+**Student:** Sagar Sinha
+**Issue:** [scikit-learn/scikit-learn #13557 — "`cross_validate` hang randomly when training svc with polynomial kernel"](https://github.com/scikit-learn/scikit-learn/issues/13557)
+**Status:** 🟡 **Phase I — claimed, awaiting maintainer scoping reply.** Claim comment posted 2026-06-18; no maintainer response as of 2026-07-21. Issue remains open and unassigned with no linked PR.
+
+---
+
+## Why I Chose This Issue
+
+[scikit-learn](https://github.com/scikit-learn/scikit-learn) is the reference machine-learning library for Python. Issue #13557 reports that `cross_validate` appears to **hang indefinitely** when fitting an `SVC` with a polynomial kernel at extreme hyper-parameters (`degree=7–8`, `gamma≈900–4300`). The underlying cause is that libsvm's SMO solver fails to converge, and with scikit-learn's default `max_iter=-1` (unlimited iterations) `fit()` simply spins with no output — the user cannot tell a slow fit from a stuck one.
+
+Reasons for choosing it:
+
+1. **Pure Python / CPU.** No GPU, no compiled-extension changes needed for the likely fix (a warning or documentation improvement) — the same non-domain-specialist profile that made tqec #613 workable.
+2. **Maintainer-reproduced with an exact trigger.** Core maintainer @NicolasHug confirmed it on master and pinned the trigger (`random_state=1` in `train_test_split`, oversized `gamma`), and the reporter linked the related [#4648](https://github.com/scikit-learn/scikit-learn/issues/4648).
+3. **Gold-standard contributor infrastructure.** scikit-learn has an OS-specific `CONTRIBUTING.md`, a code of conduct, and an extremely active review pipeline — the governance gaps I had to work around in tqec/tqecd do not exist here.
+4. **Labeled `help wanted`, unassigned, no linked PR.** No courtesy conflict with another contributor.
+
+**Checklist score: 5 / 6** (see `SHORTLIST.md` — the one weak check is #4 "active & claimable": the issue itself has had no maintainer engagement since 2019, even though the repo is highly active).
+
+---
+
+## Understanding the Issue
+
+### Problem Description
+
+`SVC(kernel='poly', degree=7, gamma=4178, C=0.66)` fed into `cross_validate` never returns. The reporter's `gdb` backtrace shows execution parked inside the libsvm solver, i.e. the SMO optimizer is not converging rather than the code deadlocking.
+
+### Expected Behavior
+
+The user gets either results or an actionable signal — a warning that the solver did not converge and that the features should be scaled — instead of a silent, indefinite spin.
+
+### Current Behavior (verified on scikit-learn 1.9.0, 2026-06-18)
+
+The original behavior is **largely mitigated already**:
+
+- With a **finite `max_iter`**, scikit-learn now emits `ConvergenceWarning: Solver terminated early (max_iter=N). Consider pre-processing your data with StandardScaler or MinMaxScaler.`
+- With the **default `max_iter=-1`** and the reporter's extreme parameters, the fit *converged* in my runs (n_iter ≈ 70k) rather than hanging indefinitely.
+
+### Remaining Gap (the actual candidate scope)
+
+There is **no signal at all on the `max_iter=-1` path**. A user who never sets `max_iter` — the default — still gets a fit that can run for tens of thousands of iterations with no indication that the parameters are pathological. Candidate fixes, in order of decreasing invasiveness:
+
+1. Emit a `ConvergenceWarning`-style hint when `max_iter=-1` and the solver blows past an iteration threshold.
+2. Document the failure mode (unscaled features + large `gamma`/`degree` → effectively unbounded runtime) in the SVM user guide / `SVC` docstring, pointing to `StandardScaler`.
+
+### ⚠️ Primary risk: "already fixed upstream"
+
+This is the same risk that ended the earlier medusa #14957 attempt and that nearly sank tqec #613. The issue is 7 years old and the reported symptom no longer reproduces as written. **This contribution proceeds only if a maintainer confirms option 1 or 2 is still wanted.** If the answer is "nothing left to do," the issue should be closed as resolved and I move to the next shortlisted candidate.
+
+---
+
+## Status Log
+
+| Date | Event |
+|---|---|
+| 2026-06-18 | Reproduced on scikit-learn 1.9.0; posted a claim comment on #13557 documenting that the hang no longer reproduces and asking whether the `max_iter=-1` guidance gap is still worth fixing. |
+| 2026-07-21 | No maintainer reply (issue last updated = my own comment). Issue still open, unassigned, no linked PR. Next step: a polite one-line follow-up ping, and if still silent, raise the scoping question on the scikit-learn Discord / mailing list per `CONTRIBUTING.md`. |
+
+---
+
+## Next Steps
+
+1. **Unblock the scoping question.** Follow up on #13557; escalate to the project's community channels if there is still no reply. The tqec #613 lesson applies directly — a polite, evidence-backed nudge is what converted that issue from stuck to active.
+2. **Only then write code.** Confirm the intended scope (warning vs. docs) before touching `sklearn/svm/`.
+3. **Fallback candidates** if #13557 is declined or closed as fixed — both re-verified open and unclaimed on 2026-07-21:
+   - [papra-hq/papra #691](https://github.com/papra-hq/papra/issues/691) — add Docker `HEALTHCHECK` (6/6, `SHEET_RESULTS_JS.md`)
+   - [home-assistant/core #143041](https://github.com/home-assistant/core/issues/143041) — migrate `ubus` `DeviceScanner` → `ScannerEntity` (6/6, `SHEET_RESULTS.md`)
+
+---
+
+## Resources Used — Contribution 2
+
+- Issue: [scikit-learn/scikit-learn #13557](https://github.com/scikit-learn/scikit-learn/issues/13557)
+- Related issue (same non-convergence family): [scikit-learn #4648](https://github.com/scikit-learn/scikit-learn/issues/4648)
+- Reporter's libsvm backtrace: [gist](https://gist.github.com/sam-yusuke/7099829b1797d6867eb928264597979d)
+- scikit-learn contribution guide: [CONTRIBUTING.md](https://github.com/scikit-learn/scikit-learn/blob/main/CONTRIBUTING.md)
+- Candidate evaluation: [`SHORTLIST.md`](SHORTLIST.md) (Candidate 1, 5/6)
