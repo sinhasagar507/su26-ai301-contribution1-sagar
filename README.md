@@ -291,7 +291,7 @@ The cross-repo blocker closed out in a single day, all on the maintainer's side,
 **Contribution Number:** 2
 **Student:** Sagar Sinha
 **Issue:** [scikit-learn/scikit-learn #13557 — "`cross_validate` hang randomly when training svc with polynomial kernel"](https://github.com/scikit-learn/scikit-learn/issues/13557)
-**Status:** 🟡 **Phase I — claimed, awaiting maintainer scoping reply.** Claim comment posted 2026-06-18; no maintainer response as of 2026-07-21. Issue remains open and unassigned with no linked PR.
+**Status:** 🟡 **Phase I — claimed, awaiting maintainer scoping reply.** Claim comment posted 2026-06-18, follow-up posted 2026-07-27; no maintainer response to either. Issue remains open and unassigned with no linked PR. **Proceed/withdraw gate: 2026-08-03** — see [Next Steps](#next-steps).
 
 ---
 
@@ -346,16 +346,19 @@ This is the same risk that ended the earlier medusa #14957 attempt and that near
 |---|---|
 | 2026-06-18 | Reproduced on scikit-learn 1.9.0; posted a claim comment on #13557 documenting that the hang no longer reproduces and asking whether the `max_iter=-1` guidance gap is still worth fixing. |
 | 2026-07-21 | No maintainer reply (issue last updated = my own comment). Issue still open, unassigned, no linked PR. Next step: a polite one-line follow-up ping, and if still silent, raise the scoping question on the scikit-learn Discord / mailing list per `CONTRIBUTING.md`. |
+| 2026-07-27 | Follow-up posted on #13557 (18:40 UTC). Rather than a bare ping it adds the measured `n_iter ≈ 70_000` for the reporter's exact setup and narrows the ask to a binary question: is a **docs-only** PR welcome (SVM user guide + `SVC` docstring note pointing at `StandardScaler` and a finite `max_iter`), or is the behavior considered adequately covered today — in which case the issue can be closed as resolved. Option 1 (a warning past an iteration threshold) was deliberately left out of the ask, since choosing the threshold is the contentious part and is a maintainer's call. Still unassigned; no reply at time of writing. |
 
 ---
 
 ## Next Steps
 
-1. **Unblock the scoping question.** Follow up on #13557; escalate to the project's community channels if there is still no reply. The tqec #613 lesson applies directly — a polite, evidence-backed nudge is what converted that issue from stuck to active.
-2. **Only then write code.** Confirm the intended scope (warning vs. docs) before touching `sklearn/svm/`.
-3. **Fallback candidates** if #13557 is declined or closed as fixed — both re-verified open and unclaimed on 2026-07-21:
-   - [papra-hq/papra #691](https://github.com/papra-hq/papra/issues/691) — add Docker `HEALTHCHECK` (6/6, `SHEET_RESULTS_JS.md`)
-   - [home-assistant/core #143041](https://github.com/home-assistant/core/issues/143041) — migrate `ubus` `DeviceScanner` → `ScannerEntity` (6/6, `SHEET_RESULTS.md`)
+1. **Escalate the scoping question.** The follow-up of 2026-07-27 is now on the issue; the thread has no active maintainer subscriber, so if it goes unanswered the question moves to the scikit-learn Discord / mailing list per `CONTRIBUTING.md`. The tqec #613 lesson applies directly — a polite, evidence-backed nudge is what converted that issue from stuck to active.
+2. **Draft the docs-only change in parallel, don't wait.** The docs note is the subset common to both acceptable outcomes and needs no maintainer scoping to be defensible, so it can be written while the question is open. Nothing in `sklearn/svm/` gets touched — i.e. no warning-threshold work — until a maintainer confirms option 1 is wanted.
+3. **Proceed/withdraw gate — 2026-08-03.** If there is still no reply by then (six weeks after the original claim), treat the silence as an answer: withdraw from #13557 and switch to a fallback rather than let the contribution drift a second month. This is the "already fixed upstream" risk above, made time-bounded.
+4. **Fallback candidates** if #13557 is declined, closed as fixed, or hits the gate — re-verified 2026-07-27:
+   - [home-assistant/core #143041](https://github.com/home-assistant/core/issues/143041) — migrate `ubus` `DeviceScanner` → `ScannerEntity` (6/6, `SHEET_RESULTS.md`). Open, unassigned, untouched since 2025-04-15.
+   - [zarr-developers/zarr-python #1328](https://github.com/zarr-developers/zarr-python/issues/1328) — additional `fsspec` tests (4/6, `SHEET_RESULTS.md` Backup 1). Open, unassigned. Scope is fuzzy by design — it needs a maintainer reply pinning the exact tests before it is claimable, so it is a slower fallback than #143041.
+   - ~~[papra-hq/papra #691](https://github.com/papra-hq/papra/issues/691) — add Docker `HEALTHCHECK`~~ — **no longer available**: claimed by another contributor on 2026-07-26 ("taking a crack at this"). Dropped from the list.
 
 ---
 
